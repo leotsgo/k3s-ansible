@@ -1,0 +1,7 @@
+---
+# Default paths
+local_kubeconfig_dir: "{{ lookup('env', 'HOME') }}/.kube"
+local_kubeconfig_file: "{{ lookup('env', 'HOME') }}/.kube/config-k3s"
+
+# Remote k3s kubeconfig location (this is the default k3s location)
+remote_kubeconfig: "/etc/rancher/k3s/k3s.yaml"

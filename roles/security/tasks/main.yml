@@ -1,0 +1,70 @@
+---
+- name: Update apt cache and upgrade packages
+  apt:
+    upgrade: full
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install required security packages
+  apt:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+      - systemd-timesyncd
+    state: present
+
+- name: Configure UFW
+  block:
+    - name: Reset UFW to default
+      ufw:
+        state: reset
+
+    - name: Allow required ports
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop: "{{ ufw_allow_ports }}"
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+      when: ufw_enabled
+
+- name: Configure fail2ban
+  block:
+    - name: Copy fail2ban jail configuration
+      template:
+        src: templates/jail.local.j2
+        dest: /etc/fail2ban/jail.local
+        mode: '0644'
+      notify: restart fail2ban
+
+    - name: Enable fail2ban service
+      service:
+        name: fail2ban
+        state: started
+        enabled: yes
+      when: fail2ban_enabled
+
+- name: Configure sysctl security settings
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+  with_dict: "{{ sysctl_security }}"
+
+- name: Configure unattended upgrades
+  template:
+    src: templates/20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: '0644'
+
+- name: Enable and start systemd-timesyncd
+  service:
+    name: systemd-timesyncd
+    state: started
+    enabled: yes

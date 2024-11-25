@@ -1,0 +1,25 @@
+---
+- hosts: k3s_server
+  become: true
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      tags: always
+
+  roles:
+    - role: security
+      tags: security
+
+    - role: xanmanning.k3s
+      k3s_become: true
+      k3s_state: installed
+      tags: k3s
+
+    - role: kubeconfig
+      tags: kubeconfig
+
+    - role: cert-manager
+      tags: cert-manager

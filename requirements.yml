@@ -1,0 +1,8 @@
+---
+collections:
+  - name: community.general
+  - name: kubernetes.core
+
+roles:
+  - src: xanmanning.k3s
+    version: v3.4.2

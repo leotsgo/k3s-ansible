@@ -1,0 +1,62 @@
+deployment:
+  enabled: true
+
+ingressRoute:
+  dashboard:
+    enabled: true
+
+ports:
+  web:
+    exposedPort: 80
+    port: 80
+    expose:
+      ip: []
+    protocol: TCP
+  websecure:
+    exposedPort: 443
+    port: 443
+    expose:
+      ip: []
+    protocol: TCP
+    tls:
+      enabled: true
+
+service:
+  enabled: true
+  type: LoadBalancer
+
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+    format: json
+
+metrics:
+  prometheus:
+    enabled: true
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: true
+  kubernetesIngress:
+    enabled: true
+    allowExternalNameServices: true
+
+globalArguments:
+  - "--global.checknewversion=false"
+  - "--global.sendanonymoususage=false"
+
+additionalArguments:
+  - "--log.level=INFO"
+  - "--providers.kubernetesingress.allowexternalnameservices=true"
+  - "--providers.kubernetescrd.allowexternalnameservices=true"
+
+securityContext:
+  capabilities:
+    drop: [ALL]
+  readOnlyRootFilesystem: true
+  runAsGroup: 65532
+  runAsNonRoot: true
+  runAsUser: 65532

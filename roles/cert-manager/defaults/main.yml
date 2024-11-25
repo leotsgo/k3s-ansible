@@ -1,0 +1,14 @@
+---
+# Cert-manager version
+cert_manager_version: "v1.14.4"
+
+# Cert-manager namespace
+cert_manager_namespace: "cert-manager"
+
+# ClusterIssuer configuration
+cluster_issuer_email: "{{ cloudflare_email }}"
+cluster_issuer_name: "letsencrypt-prod"
+cloudflare_api_token_secret_name: "cloudflare-api-token"
+
+# DNS01 solver configuration
+dns01_solver_name: "cloudflare"

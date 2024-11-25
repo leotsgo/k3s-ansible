@@ -1,0 +1,75 @@
+---
+- name: Verify remote kubeconfig exists
+  stat:
+    path: "{{ remote_kubeconfig }}"
+  register: kubeconfig_stat
+
+- name: Fail if kubeconfig doesn't exist
+  fail:
+    msg: "Kubeconfig not found at {{ remote_kubeconfig }}"
+  when: not kubeconfig_stat.stat.exists
+
+- name: Show remote kubeconfig permissions
+  command: "ls -l {{ remote_kubeconfig }}"
+  register: kubeconfig_perms
+  changed_when: false
+
+- name: Debug connection information
+  debug:
+    msg:
+      - "Ansible connection information:"
+      - "Server IP (ansible_host): {{ ansible_host }}"
+      - "SSH user (ansible_user): {{ ansible_user }}"
+      - "Remote kubeconfig exists: {{ kubeconfig_stat.stat.exists }}"
+      - "Remote kubeconfig permissions: {{ kubeconfig_perms.stdout }}"
+
+- name: Ensure local .kube directory exists
+  delegate_to: localhost
+  become: false
+  file:
+    path: "{{ lookup('env', 'HOME') }}/.kube"
+    state: directory
+    mode: '0700'
+
+- name: Fetch k3s.yaml from remote
+  fetch:
+    src: "{{ remote_kubeconfig }}"
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config-k3s"
+    flat: yes
+  register: fetch_result
+
+- name: Show fetch result
+  debug:
+    var: fetch_result
+
+- name: Replace localhost with server IP
+  delegate_to: localhost
+  become: false
+  replace:
+    path: "{{ lookup('env', 'HOME') }}/.kube/config-k3s"
+    regexp: 'https://127.0.0.1:'
+    replace: 'https://{{ ansible_host }}:'
+  when: fetch_result is success
+
+- name: Set kubeconfig permissions
+  delegate_to: localhost
+  become: false
+  file:
+    path: "{{ lookup('env', 'HOME') }}/.kube/config-k3s"
+    mode: '0600'
+  when: fetch_result is success
+
+- name: Verify local kubeconfig
+  delegate_to: localhost
+  become: false
+  stat:
+    path: "{{ lookup('env', 'HOME') }}/.kube/config-k3s"
+  register: local_kubeconfig
+
+- name: Show final status
+  debug:
+    msg:
+      - "Kubeconfig copy status:"
+      - "Local file exists: {{ local_kubeconfig.stat.exists }}"
+      - "Local file path: {{ lookup('env', 'HOME') }}/.kube/config-k3s"
+      - "Local file permissions: {{ local_kubeconfig.stat.mode }}"
