@@ -20,6 +20,3 @@
 
     - role: kubeconfig
       tags: kubeconfig
-
-    - role: cert-manager
-      tags: cert-manager
